@@ -1,0 +1,62 @@
+
+import React from 'react';
+
+export enum View {
+  Landing,
+  Textbooks,
+  EnglishBooks,
+  ComprehensiveExams,
+  SubjectIndex,
+  Quiz,
+  SessionSubjects,
+  Auth,
+}
+
+export enum Grade {
+  Eleventh = 2009,
+}
+
+export enum Semester {
+  First = "الفصل الأول",
+  Second = "الفصل الثاني",
+}
+
+export enum SubjectName {
+  JordanHistory = "تاريخ الأردن",
+  IslamicEducation = "التربية الإسلامية",
+  English = "اللغة الإنجليزية",
+  Arabic = "اللغة العربية",
+}
+
+export interface Subject {
+  id: SubjectName;
+  coverImage: string;
+  fontClass: 'font-naskh' | 'font-sans';
+  semester: Semester;
+  textbookUrl?: string;
+  multiBooks?: { label: string; url: string }[];
+}
+
+export interface Lesson {
+  title: string;
+  page: number;
+}
+
+export interface Unit {
+  title: string;
+  lessons: Lesson[];
+  imageUrl?: string;
+}
+
+export interface SubjectIndexData {
+  [key: string]: Unit[];
+}
+
+export interface Question {
+  number: number;
+  question: string;
+  choices: string[];
+  correct_answer: string;
+  page: string;
+  source_text: string;
+}

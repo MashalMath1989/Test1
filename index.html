@@ -1,0 +1,97 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>JoSchool 11</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --color-primary: #0ea5e9;
+        --color-background: #fff9e6; /* Creamy paper-like background */
+        --color-text-primary: #1e293b;
+        --font-body: 'Noto Naskh Arabic', serif;
+        --font-heading: 'Fredoka', sans-serif;
+      }
+      body {
+        font-family: var(--font-body);
+        background-color: var(--color-background);
+        color: var(--color-text-primary);
+        overflow-x: hidden;
+        -webkit-tap-highlight-color: transparent;
+        overscroll-behavior-y: contain;
+      }
+      .font-naskh { font-family: var(--font-body); }
+      .font-cartoon { font-family: var(--font-heading); }
+      
+      /* Cartoon Styles */
+      .cartoon-border {
+        border: 3px solid #334155;
+        border-radius: 1.5rem;
+      }
+      .cartoon-shadow {
+        box-shadow: 0.5px 0.5px 0px #334155;
+      }
+      .cartoon-shadow-lg {
+        box-shadow: 1px 1px 0px #334155;
+      }
+      .cartoon-shadow-sm {
+        box-shadow: 0.25px 0.25px 0px #334155;
+      }
+      .cartoon-button:active {
+        transform: translate(0.5px, 0.5px);
+        box-shadow: 0px 0px 0px #334155;
+      }
+      
+      @keyframes fast-fade {
+        from { opacity: 0.95; }
+        to { opacity: 1; }
+      }
+      .transition-smooth {
+        animation: fast-fade 0.1s ease-out forwards;
+      }
+    </style>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            keyframes: {
+              'pulse-inside': {
+                '0%': { transform: 'scale(0.8)', opacity: '0.8' },
+                '100%': { transform: 'scale(1.6)', opacity: '0' },
+              },
+              'soft-pulse': {
+                '0%, 100%': { transform: 'scale(1)', boxShadow: '0 0 20px 0 rgba(22, 163, 74, 0.4)' },
+                '50%': { transform: 'scale(1.08)', boxShadow: '0 0 30px 10px rgba(22, 163, 74, 0)' },
+              }
+            },
+            animation: {
+              'pulse-inside': 'pulse-inside 2.5s ease-out infinite',
+              'soft-pulse': 'soft-pulse 3s infinite ease-in-out',
+            },
+          },
+        },
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^18.2.0/",
+    "react/": "https://aistudiocdn.com/react@^18.2.0/",
+    "react": "https://aistudiocdn.com/react@^18.2.0",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@beta"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-[#f8fafc]">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

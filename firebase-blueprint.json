@@ -1,0 +1,76 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique user ID from Firebase Auth" },
+        "email": { "type": "string", "format": "email", "description": "User's email address" },
+        "displayName": { "type": "string", "description": "User's display name" },
+        "photoURL": { "type": "string", "description": "User's photo URL" },
+        "role": { "type": "string", "enum": ["student", "admin"], "description": "User's role" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the user was created" },
+        "lastLogin": { "type": "string", "format": "date-time", "description": "Last login timestamp" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "QuizAttempt": {
+      "title": "Quiz Attempt",
+      "description": "A single attempt at a quiz",
+      "type": "object",
+      "properties": {
+        "subjectId": { "type": "string", "description": "Subject name" },
+        "score": { "type": "number", "description": "Score achieved" },
+        "totalQuestions": { "type": "number", "description": "Total number of questions" },
+        "markFrom40": { "type": "number", "description": "Mark from 40" },
+        "isPassed": { "type": "boolean", "description": "Whether the user passed" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the quiz was taken" }
+      },
+      "required": ["subjectId", "score", "totalQuestions", "timestamp"]
+    },
+    "UserProgress": {
+      "title": "User Progress",
+      "description": "Aggregated progress for a user",
+      "type": "object",
+      "properties": {
+        "lastSubject": { "type": "string", "description": "Last subject studied" },
+        "totalQuizzes": { "type": "number", "description": "Total number of quizzes taken" },
+        "totalScore": { "type": "number", "description": "Total score achieved" },
+        "lastUpdated": { "type": "string", "format": "date-time", "description": "Last update timestamp" }
+      }
+    },
+    "QuizProgress": {
+      "title": "Quiz Progress",
+      "description": "Unfinished quiz state",
+      "type": "object",
+      "properties": {
+        "subjectId": { "type": "string" },
+        "examTitle": { "type": "string" },
+        "currentQuestionIndex": { "type": "number" },
+        "userAnswers": { "type": "array", "items": { "type": "string" } },
+        "totalQuestions": { "type": "number" },
+        "lastUpdated": { "type": "string", "format": "date-time" }
+      },
+      "required": ["subjectId", "examTitle", "currentQuestionIndex", "userAnswers", "totalQuestions", "lastUpdated"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "User",
+      "description": "User profile document"
+    },
+    "/users/{uid}/attempts/{attemptId}": {
+      "schema": "QuizAttempt",
+      "description": "Individual quiz attempts for a user"
+    },
+    "/users/{uid}/progress/current": {
+      "schema": "UserProgress",
+      "description": "Current progress tracking for a user"
+    },
+    "/users/{uid}/quizProgress/{examTitle}": {
+      "schema": "QuizProgress",
+      "description": "Saved state for an unfinished quiz"
+    }
+  }
+}
