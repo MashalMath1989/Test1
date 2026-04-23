@@ -141,66 +141,95 @@ const App: React.FC = () => {
 
     const currentView = viewHistory[viewHistory.length - 1];
 
+    // Handle Auth State
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
             setUser(firebaseUser);
             setIsAuthReady(true);
-            
-            if (firebaseUser) {
-                // Fetch progress and completed exams
-                const progressUnsubscribe = onSnapshot(collection(db, 'users', firebaseUser.uid, 'quizProgress'), (snapshot) => {
-                    const progress: Record<string, any> = {};
-                    snapshot.docs.forEach(doc => {
-                        progress[doc.id] = doc.data();
-                    });
-                    setQuizProgressMap(progress);
-                });
-
-                const attemptsUnsubscribe = onSnapshot(collection(db, 'users', firebaseUser.uid, 'attempts'), (snapshot) => {
-                    const completed = new Set<string>();
-                    snapshot.docs.forEach(doc => {
-                        const data = doc.data();
-                        if (data.score === data.totalQuestions) {
-                            completed.add(data.examTitle || data.subjectId + " - " + data.lessonTitle); // Fallback for old data
-                        }
-                    });
-                    setCompletedExams(completed);
-                });
-
-                // Ensure user document exists in Firestore - only if needed
-                const userRef = doc(db, 'users', firebaseUser.uid);
-                try {
-                    const userSnap = await getDoc(userRef);
-                    if (!userSnap.exists()) {
-                        await setDoc(userRef, {
-                            uid: firebaseUser.uid,
-                            email: firebaseUser.email,
-                            displayName: firebaseUser.displayName || 'طالب',
-                            photoURL: firebaseUser.photoURL,
-                            role: 'student',
-                            createdAt: serverTimestamp(),
-                            lastLogin: serverTimestamp()
-                        });
-                    } else {
-                        await updateDoc(userRef, {
-                            lastLogin: serverTimestamp()
-                        });
-                    }
-                } catch (error) {
-                    console.error("Error updating user profile:", error);
-                }
-
-                return () => {
-                    progressUnsubscribe();
-                    attemptsUnsubscribe();
-                };
-            } else {
-                setQuizProgressMap({});
-                setCompletedExams(new Set());
-            }
         });
-        return () => unsubscribe();
+        return () => unsubscribeAuth();
     }, []);
+
+    // Handle User-specific Data Listeners and Profile Sync
+    useEffect(() => {
+        if (!user) {
+            setQuizProgressMap({});
+            setCompletedExams(new Set());
+            return;
+        }
+
+        const uid = user.uid;
+
+        // Fetch progress and completed exams with snapshot listeners
+        const progressUnsubscribe = onSnapshot(
+            collection(db, 'users', uid, 'quizProgress'), 
+            (snapshot) => {
+                const progress: Record<string, any> = {};
+                snapshot.docs.forEach(doc => {
+                    progress[doc.id] = doc.data();
+                });
+                setQuizProgressMap(progress);
+            },
+            (error) => {
+                // Log and ignore permission-denied errors that often happen during logout
+                if (error.code !== 'permission-denied') {
+                    console.error("Error in quizProgress listener:", error);
+                }
+            }
+        );
+
+        const attemptsUnsubscribe = onSnapshot(
+            collection(db, 'users', uid, 'attempts'), 
+            (snapshot) => {
+                const completed = new Set<string>();
+                snapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    if (data.score === data.totalQuestions) {
+                        completed.add(data.examTitle || data.subjectId + " - " + data.lessonTitle); // Fallback for old data
+                    }
+                });
+                setCompletedExams(completed);
+            },
+            (error) => {
+                // Log and ignore permission-denied errors that often happen during logout
+                if (error.code !== 'permission-denied') {
+                    console.error("Error in attempts listener:", error);
+                }
+            }
+        );
+
+        // Ensure user document exists in Firestore - only if needed
+        const syncUserProfile = async () => {
+            const userRef = doc(db, 'users', uid);
+            try {
+                const userSnap = await getDoc(userRef);
+                if (!userSnap.exists()) {
+                    await setDoc(userRef, {
+                        uid: uid,
+                        email: user.email,
+                        displayName: user.displayName || 'طالب',
+                        photoURL: user.photoURL,
+                        role: 'student',
+                        createdAt: serverTimestamp(),
+                        lastLogin: serverTimestamp()
+                    });
+                } else {
+                    await updateDoc(userRef, {
+                        lastLogin: serverTimestamp()
+                    });
+                }
+            } catch (error) {
+                console.error("Error updating user profile:", error);
+            }
+        };
+
+        syncUserProfile();
+
+        return () => {
+            progressUnsubscribe();
+            attemptsUnsubscribe();
+        };
+    }, [user]);
 
     const fetchExams = useCallback(() => {
         const examSets = [
@@ -557,7 +586,7 @@ const App: React.FC = () => {
                         </div>
                     </div>
                     
-                    <div className="bg-sky-500 p-6 cartoon-border cartoon-shadow-lg grid grid-cols-2 gap-4 overflow-hidden relative">
+                    <div className="bg-sky-500 p-4 cartoon-border cartoon-shadow-lg grid grid-cols-1 sm:grid-cols-2 gap-3 overflow-hidden relative">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
                         
                         {subjectsData.filter(s => s.semester === sem).map(s => {
@@ -566,13 +595,13 @@ const App: React.FC = () => {
                                 <button 
                                     key={`${s.id}-${s.semester}`} 
                                     onClick={() => { setSelectedSubject(s); setExpandedUnitIndices([]); navigateTo(View.SubjectIndex); }} 
-                                    className="group bg-white p-3 cartoon-border cartoon-shadow-sm cartoon-button flex flex-row items-center gap-3 transition-all min-h-[100px]"
+                                    className="group bg-white p-2.5 cartoon-border cartoon-shadow-sm cartoon-button flex flex-row items-center gap-2.5 transition-all min-h-[85px]"
                                 >
                                     <div className="relative shrink-0">
-                                        <img src={s.coverImage} className="w-12 h-18 object-cover cartoon-border border-2 group-hover:scale-105 transition-transform" alt="" />
+                                        <img src={s.coverImage} className="w-10 h-14 object-cover cartoon-border border-2 group-hover:scale-105 transition-transform" alt="" />
                                     </div>
                                     <div className="flex-1 text-right overflow-hidden">
-                                        <h4 className="text-[14px] font-black text-slate-800 whitespace-nowrap mb-1 tracking-tight font-cartoon">{s.id}</h4>
+                                        <h4 className="text-[14px] md:text-[15px] font-black text-slate-800 whitespace-nowrap mb-0.5 tracking-tight font-cartoon">{s.id}</h4>
                                         <div className="flex items-center gap-1.5">
                                             <div className={`w-1.5 h-1.5 rounded-full ${hasData ? 'bg-green-500' : 'bg-slate-300'}`}></div>
                                             <span className={`text-[10px] font-bold ${hasData ? 'text-green-600' : 'text-slate-400'}`}>
