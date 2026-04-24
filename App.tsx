@@ -326,19 +326,19 @@ const App: React.FC = () => {
         }
     };
 
-    const confirmLeaveQuiz = async () => {
+    const confirmLeaveQuiz = () => {
         if (user && currentQuiz.length > 0 && !showResults) {
             try {
-                // Save progress
+                // Save progress (fire and forget)
                 const progressRef = doc(db, 'users', user.uid, 'quizProgress', currentExamTitle.replace(/\//g, '-'));
-                await setDoc(progressRef, {
+                setDoc(progressRef, {
                     subjectId: selectedSubject?.id || 'unknown',
                     examTitle: currentExamTitle || 'unnamed',
                     currentQuestionIndex: currentQuestionIndex,
                     userAnswers: userAnswers,
                     totalQuestions: currentQuiz.length,
                     lastUpdated: serverTimestamp()
-                });
+                }).catch(error => console.error("Error saving quiz progress:", error));
             } catch (error) {
                 console.error("Error saving quiz progress:", error);
             }
@@ -586,7 +586,7 @@ const App: React.FC = () => {
                         </div>
                     </div>
                     
-                    <div className="bg-sky-500 p-4 cartoon-border cartoon-shadow-lg grid grid-cols-1 sm:grid-cols-2 gap-3 overflow-hidden relative">
+                    <div className="bg-yellow-400 p-4 cartoon-border cartoon-shadow-lg grid grid-cols-2 gap-3 overflow-hidden relative">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
                         
                         {subjectsData.filter(s => s.semester === sem).map(s => {
@@ -595,13 +595,13 @@ const App: React.FC = () => {
                                 <button 
                                     key={`${s.id}-${s.semester}`} 
                                     onClick={() => { setSelectedSubject(s); setExpandedUnitIndices([]); navigateTo(View.SubjectIndex); }} 
-                                    className="group bg-white p-2.5 cartoon-border cartoon-shadow-sm cartoon-button flex flex-row items-center gap-2.5 transition-all min-h-[85px]"
+                                    className="group bg-white px-2 py-2.5 cartoon-border cartoon-shadow-sm cartoon-button flex flex-row items-center gap-1.5 transition-all min-h-[80px]"
                                 >
                                     <div className="relative shrink-0">
-                                        <img src={s.coverImage} className="w-10 h-14 object-cover cartoon-border border-2 group-hover:scale-105 transition-transform" alt="" />
+                                        <img src={s.coverImage} className="w-8 h-11 object-cover cartoon-border border-2 group-hover:scale-105 transition-transform" alt="" />
                                     </div>
                                     <div className="flex-1 text-right overflow-hidden">
-                                        <h4 className="text-[14px] md:text-[15px] font-black text-slate-800 whitespace-nowrap mb-0.5 tracking-tight font-cartoon">{s.id}</h4>
+                                        <h4 className="text-[10px] xs:text-[12px] sm:text-[14px] md:text-[15px] font-black text-slate-800 whitespace-nowrap mb-0.5 tracking-tighter sm:tracking-tight font-cartoon">{s.id}</h4>
                                         <div className="flex items-center gap-1.5">
                                             <div className={`w-1.5 h-1.5 rounded-full ${hasData ? 'bg-green-500' : 'bg-slate-300'}`}></div>
                                             <span className={`text-[10px] font-bold ${hasData ? 'text-green-600' : 'text-slate-400'}`}>
@@ -950,7 +950,7 @@ const App: React.FC = () => {
         <div className="min-h-screen bg-[#fff9e6]">
             <header className="w-full bg-white cartoon-border border-t-0 border-x-0 border-b-4 sticky top-0 z-40 h-20 flex items-center px-6">
                 <div className="flex-1">
-                    {viewHistory.length > 1 && (
+                    {user && viewHistory.length > 1 && (
                         <button onClick={goBack} className="p-3 bg-slate-50 cartoon-border border-2 cartoon-shadow-sm cartoon-button transition-all">
                             <ArrowLeftIcon className="w-6 h-6 transform scale-x-[-1] text-slate-600" />
                         </button>
@@ -961,32 +961,23 @@ const App: React.FC = () => {
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-cartoon">Generation 2009</span>
                 </div>
                 <div className="flex-1 flex justify-end items-center gap-3">
-                    {isAuthReady && (
-                        user ? (
-                            <div className="flex items-center gap-3">
-                                <div className="hidden md:flex flex-col items-end">
-                                    <span className="text-xs font-black text-slate-800 font-cartoon">{user.displayName || 'طالب'}</span>
-                                    <button onClick={handleLogout} className="text-[10px] font-bold text-red-500 hover:text-red-600 transition-colors font-cartoon">تسجيل الخروج</button>
-                                </div>
-                                <div className="w-10 h-10 cartoon-border border-2 cartoon-shadow-sm flex items-center justify-center overflow-hidden bg-white">
-                                    {user.photoURL ? (
-                                        <img src={user.photoURL} alt="" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <UserIcon className="w-5 h-5 text-sky-600" />
-                                    )}
-                                </div>
-                                <button onClick={handleLogout} className="md:hidden p-2 text-slate-400 hover:text-red-500 transition-colors">
-                                    <LogOutIcon className="w-5 h-5" />
-                                </button>
+                    {isAuthReady && user && (
+                        <div className="flex items-center gap-3">
+                            <div className="hidden md:flex flex-col items-end">
+                                <span className="text-xs font-black text-slate-800 font-cartoon">{user.displayName || 'طالب'}</span>
+                                <button onClick={handleLogout} className="text-[10px] font-bold text-red-500 hover:text-red-600 transition-colors font-cartoon">تسجيل الخروج</button>
                             </div>
-                        ) : (
-                            <button 
-                                onClick={() => navigateTo(View.Auth)}
-                                className="bg-sky-500 text-white px-5 py-2 cartoon-border border-2 cartoon-shadow-sm cartoon-button text-xs font-black transition-all font-cartoon"
-                            >
-                                دخول
+                            <div className="w-10 h-10 cartoon-border border-2 cartoon-shadow-sm flex items-center justify-center overflow-hidden bg-white">
+                                {user.photoURL ? (
+                                    <img src={user.photoURL} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                    <UserIcon className="w-5 h-5 text-sky-600" />
+                                )}
+                            </div>
+                            <button onClick={handleLogout} className="md:hidden p-2 text-slate-400 hover:text-red-500 transition-colors">
+                                <LogOutIcon className="w-5 h-5" />
                             </button>
-                        )
+                        </div>
                     )}
                 </div>
             </header>
@@ -996,6 +987,8 @@ const App: React.FC = () => {
                         <div className="w-12 h-12 border-4 border-slate-900 border-t-transparent rounded-full animate-spin mb-4"></div>
                         <p className="font-black text-slate-900 font-cartoon">جاري التحميل...</p>
                     </div>
+                ) : !user ? (
+                    <AuthPage />
                 ) : currentViewComponent()}
             </main>
             {showBackConfirmation && <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-fast-fade" dir="rtl"><div className="bg-white w-full max-w-xs cartoon-border cartoon-shadow-lg p-8"><h3 className="text-xl font-black text-slate-800 text-center mb-6 font-cartoon">هل تريد مغادرة الاختبار؟</h3><p className="text-center text-slate-500 text-xs font-bold mb-8">سيتم حفظ تقدمك تلقائياً</p><div className="space-y-3"><button onClick={() => setShowBackConfirmation(false)} className="w-full py-4 bg-sky-500 text-white cartoon-border cartoon-shadow-sm cartoon-button font-black font-cartoon">إكمال الاختبار</button><button onClick={confirmLeaveQuiz} className="w-full py-4 bg-white cartoon-border cartoon-shadow-sm cartoon-button text-slate-600 font-black font-cartoon">العودة للفهرس</button></div></div></div>}
